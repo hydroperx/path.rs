@@ -11,7 +11,7 @@ Requirements:
 # Example
 
 ```rust
-use hydroperfox_filepaths::FlexPath;
+use realhydroper_path::FlexPath;
 
 assert_eq!("a", FlexPath::new_common("a/b").resolve("..").to_string());
 assert_eq!("a", FlexPath::new_common("a/b/..").to_string());

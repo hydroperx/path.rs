@@ -12,14 +12,14 @@ There are two _FlexPathVariant_ variants currently:
 - _Common_
 - _Windows_
 
-The constant `FlexPathVariant::NATIVE` is one of these variants
+The constant `FlexPathVariant::native()` is one of these variants
 based on the target platform. For the Windows operating system, it
 is always _Windows_. For other platforms, it's always _Common_.
 
 # Example
 
 ```
-use hydroperfox_filepaths::FlexPath;
+use realhydroper_path::FlexPath;
 
 assert_eq!("a", FlexPath::new_common("a/b").resolve("..").to_string());
 assert_eq!("a", FlexPath::new_common("a/b/..").to_string());
@@ -29,6 +29,7 @@ assert_eq!("../../c/d", FlexPath::new_common("/a/b").relative("/c/d"));
 */
 
 use lazy_regex::*;
+use std::{path::PathBuf, str::FromStr};
 
 pub(crate) mod common;
 pub(crate) mod flexible;
@@ -42,7 +43,7 @@ pub(crate) mod flexible;
 /// * `Windows`
 #[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Debug)]
 pub enum FlexPathVariant {
-    /// Indicates that the path is manipulated in a common way.
+    /// Indicates that the path is manipulated in a common way, resulting into forward slashes.
     Common,
     /// Indicates that the path is manipulated compatibly with the Windows operating system.
     Windows,
@@ -151,7 +152,7 @@ impl FlexPath {
     # Example
 
     ```
-    use hydroperfox_filepaths::FlexPath;
+    use realhydroper_path::FlexPath;
     assert_eq!("", FlexPath::new_common("/a/b").relative("/a/b"));
     assert_eq!("c", FlexPath::new_common("/a/b").relative("/a/b/c"));
     assert_eq!("../../c/d", FlexPath::new_common("/a/b").relative("/c/d"));
@@ -172,7 +173,7 @@ impl FlexPath {
     /// # Example
     /// 
     /// ```
-    /// use hydroperfox_filepaths::FlexPath;
+    /// use realhydroper_path::FlexPath;
     /// assert_eq!("a.y", FlexPath::new_common("a.x").change_extension(".y").to_string());
     /// assert_eq!("a.z", FlexPath::new_common("a.x.y").change_extension(".z").to_string());
     /// assert_eq!("a.z.w", FlexPath::new_common("a.x.y").change_extension(".z.w").to_string());
@@ -213,7 +214,7 @@ impl FlexPath {
     /// # Example
     /// 
     /// ```
-    /// use hydroperfox_filepaths::FlexPath;
+    /// use realhydroper_path::FlexPath;
     /// assert_eq!("qux.html", FlexPath::new_common("foo/qux.html").base_name());
     /// ```
     pub fn base_name(&self) -> String {
@@ -227,7 +228,7 @@ impl FlexPath {
     /// # Example
     /// 
     /// ```
-    /// use hydroperfox_filepaths::FlexPath;
+    /// use realhydroper_path::FlexPath;
     /// assert_eq!("qux", FlexPath::new_common("foo/qux.html").base_name_without_ext([".html"]));
     /// ```
     pub fn base_name_without_ext<'a, T>(&self, extensions: T) -> String
@@ -236,23 +237,21 @@ impl FlexPath {
         base_name_without_ext(&self.0, extensions)
     }
 
-    /// Returns a string representation of the path,
-    /// delimiting segments with either a forward slash (`/`) or backward slash (`\`)
-    /// depending on the path's `FlexPathVariant`.
-    pub fn to_string_with_flex_separator(&self) -> String {
-        if self.variant() == FlexPathVariant::Windows {
-            self.0.replace('/', "\\")
-        } else {
-            self.0.clone()
-        }
+    pub fn to_path_buf(&self) -> PathBuf {
+        PathBuf::from_str(&self.to_string()).unwrap_or(PathBuf::new())
     }
 }
 
 impl ToString for FlexPath {
     /// Returns a string representation of the path,
-    /// always delimiting segments with a forward slash (`/`).
+    /// delimiting segments with either a forward slash (`/`) or backward slash (`\`)
+    /// depending on the path's `FlexPathVariant`.
     fn to_string(&self) -> String {
-        self.0.clone()
+        if self.variant() == FlexPathVariant::Windows {
+            self.0.replace('/', "\\")
+        } else {
+            self.0.clone()
+        }
     }
 }
 
@@ -270,7 +269,7 @@ fn change_last_extension(path: &str, extension: &str) -> String {
     let extension = (if extension.starts_with('.') { "" } else { "." }).to_owned() + extension;
     assert!(
         extension[1..].find('.').is_none(),
-        "The argument to hydroperfox_filepaths::change_last_extension() must only contain one extension; got {}",
+        "The argument to realhydroper_path::change_last_extension() must only contain one extension; got {}",
         extension
     );
     if regex_find!(r"(\..+)$", path).is_none() {
@@ -285,8 +284,9 @@ fn extension_arg(extension: &str) -> String {
 }
 
 fn has_extension(path: &str, extension: &str) -> bool {
-    let extension = (if extension.starts_with('.') { "" } else { "." }).to_owned() + extension;
-    path.ends_with(&extension_arg(&extension))
+    let extension = extension.to_lowercase();
+    let extension = (if extension.starts_with('.') { "" } else { "." }).to_owned() + &extension;
+    path.to_lowercase().ends_with(&extension_arg(&extension))
 }
 
 fn has_extensions<'a, T: IntoIterator<Item = &'a str>>(path: &str, extensions: T) -> bool {
@@ -333,11 +333,11 @@ mod test {
         assert_eq!("a/b", FlexPath::new_common("a//b").to_string());
 
         let windows = FlexPathVariant::Windows;
-        assert_eq!(r"\\Whack/a/Box", FlexPath::from_n(["foo", r"\\Whack////a//Box", "..", "Box"], windows).to_string());
-        assert_eq!("C:/a", FlexPath::new("C:/", windows).resolve("a").to_string());
-        assert_eq!("D:/", FlexPath::new("C:/", windows).resolve("D:/").to_string());
-        assert_eq!("D:/a", FlexPath::new("D:/a", windows).to_string());
-        assert_eq!("C:/a/f/b", FlexPath::new("a", windows).resolve("C:/a///f//b").to_string());
+        assert_eq!(r"\\Whack\a\Box", FlexPath::from_n(["foo", r"\\Whack////a//Box", "..", "Box"], windows).to_string());
+        assert_eq!(r"C:\a", FlexPath::new("C:/", windows).resolve("a").to_string());
+        assert_eq!(r"D:\", FlexPath::new("C:/", windows).resolve("D:/").to_string());
+        assert_eq!(r"D:\a", FlexPath::new("D:/a", windows).to_string());
+        assert_eq!(r"C:\a\f\b", FlexPath::new("a", windows).resolve("C:/a///f//b").to_string());
     }
 
     #[test]

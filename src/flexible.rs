@@ -78,7 +78,7 @@ pub fn relative(from_path: &str, to_path: &str, manipulation: FlexPathVariant) -
         FlexPathVariant::Windows => {
             assert!(
                 [from_path.to_owned(), to_path.to_owned()].iter().all(|path| is_absolute(path, manipulation)),
-                "hydroperfox_filepaths::argumented::relative() requires absolute paths as arguments"
+                "realhydroper_path::argumented::relative() requires absolute paths as arguments"
             );
             let mut paths = [from_path, to_path].map(|s| s.to_owned());
             let prefixes: Vec<String> = paths.iter().map(|path| STARTS_WITH_WINDOWS_PATH_PREFIX_OR_SLASH.find(path.as_ref()).unwrap().as_str().into()).collect();

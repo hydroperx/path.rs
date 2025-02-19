@@ -11,7 +11,7 @@ static PATH_SEPARATOR: Lazy<Regex> = lazy_regex!(r"[/\\]");
 pub fn relative(from_path: &str, to_path: &str) -> String {
     assert!(
         [from_path.to_owned(), to_path.to_owned()].iter().all(|path| STARTS_WITH_PATH_SEPARATOR.is_match(path)),
-        "hydroperfox_filepaths::relative() requires absolute paths as arguments"
+        "realhydroper_path::relative() requires absolute paths as arguments"
     );
 
     let mut r = Vec::<String>::new();
