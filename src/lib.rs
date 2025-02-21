@@ -2,10 +2,10 @@
 Work with file paths by text only.
 
 In the Windows operating system, absolute paths may either start with a drive letter followed by
-a colon or an UNC path prefix (`\\`). Therefore, this crate provides
-a `FlexPath` that is based on a variant ([_FlexPathVariant_]), which you don't need to always
-specify. This variant indicates whether to interpret Windows absolute paths
-or not.
+a colon, or an UNC path prefix (`\\`), or an extended drive letter prefix (`\\?\X:`).
+Therefore, this crate provides a `FlexPath` that is based on a variant ([_FlexPathVariant_]),
+which you don't need to always specify. This variant indicates whether to
+interpret Windows absolute paths or not.
 
 There are two _FlexPathVariant_ variants currently:
 
@@ -334,6 +334,8 @@ mod test {
 
         let windows = FlexPathVariant::Windows;
         assert_eq!(r"\\Whack\a\Box", FlexPath::from_n(["foo", r"\\Whack////a//Box", "..", "Box"], windows).to_string());
+        assert_eq!(r"\\?\X:\", FlexPath::from_n([r"\\?\X:", r".."], windows).to_string());
+        assert_eq!(r"\\?\X:\", FlexPath::from_n([r"\\?\X:\", r".."], windows).to_string());
         assert_eq!(r"C:\a", FlexPath::new("C:/", windows).resolve("a").to_string());
         assert_eq!(r"D:\", FlexPath::new("C:/", windows).resolve("D:/").to_string());
         assert_eq!(r"D:\a", FlexPath::new("D:/a", windows).to_string());
@@ -359,5 +361,6 @@ mod test {
         assert_eq!(r"\\foo", FlexPath::new("C:/", windows).relative(r"\\foo"));
         assert_eq!("../../foo", FlexPath::new(r"\\a/b", windows).relative(r"\\foo"));
         assert_eq!("D:/", FlexPath::new("C:/", windows).relative(r"D:"));
+        assert_eq!("../bar", FlexPath::new(r"\\?\C:\foo", windows).relative(r"\\?\C:\bar"));
     }
 }

@@ -11,16 +11,18 @@ use lazy_regex::*;
 
 static STARTS_WITH_WINDOWS_PATH_PREFIX: Lazy<Regex> = lazy_regex!(r#"(?x)
     ^ (
-        (\\\\)       | # UNC prefix
-        ([A-Za-z]\:)   # drive prefix
+        (\\\\\?\\[A-Za-z]\:)  | # extended drive prefix
+        (\\\\)                | # UNC prefix
+        ([A-Za-z]\:)            # drive prefix
     )
 "#);
 
 static STARTS_WITH_WINDOWS_PATH_PREFIX_OR_SLASH: Lazy<Regex> = lazy_regex!(r#"(?x)
     ^ (
-        (\\\\)             | # UNC prefix
-        ([A-Za-z]\:)       | # drive prefix
-        [\/\\] ([^\\] | $)   # slash
+        (\\\\\?\\[A-Za-z]\:)  | # extended drive prefix
+        (\\\\)                | # UNC prefix
+        ([A-Za-z]\:)          | # drive prefix
+        [\/\\] ([^\\] | $)      # slash
     )
 "#);
 
