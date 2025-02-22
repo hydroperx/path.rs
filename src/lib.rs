@@ -311,9 +311,9 @@ fn base_name_without_ext<'a, T>(path: &str, extensions: T) -> String
 /// Similiar to `std::fs::canonicalize`, but canonicalizes
 /// inexistent paths.
 pub fn canonicalize_inexistent_path(p: impl AsRef<Path>) -> PathBuf {
-    let p = std::path::absolute(p.as_ref()).unwrap_or(PathBuf::new());
-    let p = p.to_str().unwrap();
-    let p = regex_replace!(r"[^\\/][\\/]+$", p, |a: &str| {
+    let cwd = std::env::current_dir().unwrap_or(PathBuf::from_str("/").unwrap());
+    let p = FlexPath::from_n_native([cwd.to_str().unwrap(), &p.as_ref().to_string_lossy().to_owned()]).to_string();
+    let p = regex_replace!(r"[^\\/][\\/]+$", &p, |a: &str| {
         a.chars().collect::<Vec<_>>()[0].to_string()
     }).into_owned();
 
