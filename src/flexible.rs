@@ -11,22 +11,25 @@ use lazy_regex::*;
 
 static STARTS_WITH_WINDOWS_PATH_PREFIX: Lazy<Regex> = lazy_regex!(r#"(?x)
     ^ (
-        (\\\\\?\\[A-Za-z]\:)  | # extended drive prefix
-        (\\\\)                | # UNC prefix
-        ([A-Za-z]\:)            # drive prefix
+        (\\\\\?\\([A-Za-z]\:)?)  | # extended-length prefix
+        (\\\\)                   | # UNC prefix
+        ([A-Za-z]\:)               # drive prefix
     )
 "#);
 
 static STARTS_WITH_WINDOWS_PATH_PREFIX_OR_SLASH: Lazy<Regex> = lazy_regex!(r#"(?x)
     ^ (
-        (\\\\\?\\[A-Za-z]\:)  | # extended drive prefix
-        (\\\\)                | # UNC prefix
-        ([A-Za-z]\:)          | # drive prefix
-        [\/\\] ([^\\] | $)      # slash
+        (\\\\\?\\([A-Za-z]\:)?)  | # extended-length prefix
+        (\\\\)                   | # UNC prefix
+        ([A-Za-z]\:)             | # drive prefix
+        [\/\\] ([^\\] | $)         # slash
     )
 "#);
 
-static UNC_PREFIX: &str = r"\\";
+static UNC_PREFIX: &'static [&'static str] = &[
+    r"\\",
+    r"\\?\",
+];
 
 pub fn resolve(path1: &str, path2: &str, manipulation: FlexPathVariant) -> String {
     match manipulation {
@@ -42,8 +45,8 @@ pub fn resolve(path1: &str, path2: &str, manipulation: FlexPathVariant) -> Strin
             let prefix = STARTS_WITH_WINDOWS_PATH_PREFIX.find(prefixed.last().unwrap().as_ref()).map(|m| m.as_str().to_owned()).unwrap();
             let paths: Vec<String> = paths.iter().map(|path| STARTS_WITH_WINDOWS_PATH_PREFIX.replace(path.as_ref(), |_: &Captures| "/").into_owned()).collect();
             let r = crate::common::resolve(&paths[0], &paths[1]);
-            if prefix == UNC_PREFIX {
-                return UNC_PREFIX.to_owned() + &r[1..];
+            if UNC_PREFIX.contains(&prefix.as_str()) {
+                return prefix + &r[1..];
             }
             prefix + &r
         },

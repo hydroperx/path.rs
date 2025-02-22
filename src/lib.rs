@@ -29,7 +29,7 @@ assert_eq!("../../c/d", FlexPath::new_common("/a/b").relative("/c/d"));
 */
 
 use lazy_regex::*;
-use std::{path::PathBuf, str::FromStr};
+use std::{path::{Path, PathBuf}, str::FromStr};
 
 pub(crate) mod common;
 pub(crate) mod flexible;
@@ -308,6 +308,26 @@ fn base_name_without_ext<'a, T>(path: &str, extensions: T) -> String
     })
 }
 
+/// Similiar to `std::fs::canonicalize`, but canonicalizes
+/// inexistent paths.
+pub fn canonicalize_inexistent_path(p: impl AsRef<Path>) -> PathBuf {
+    let p = std::path::absolute(p.as_ref()).unwrap_or(PathBuf::new());
+    let p = p.to_str().unwrap();
+    let p = regex_replace!(r"[^\\/][\\/]+$", p, |a: &str| {
+        a.chars().collect::<Vec<_>>()[0].to_string()
+    }).into_owned();
+
+    // Use extended-length syntax for Windows absolute paths
+    if regex_is_match!(r"^[A-Za-z]\:", &p) {
+        return PathBuf::from_str(&(r"\\?\".to_owned() + &p)).unwrap_or(PathBuf::new());
+    }
+    if regex_is_match!(r"^(\\\\([^?]|$))", &p) {
+        return PathBuf::from_str(&(r"\\?\UNC".to_owned() + &p[1..].to_owned())).unwrap_or(PathBuf::new());
+    }
+
+    PathBuf::from_str(&p).unwrap_or(PathBuf::new())
+}
+
 #[cfg(test)]
 mod test {
     use super::*;
@@ -336,6 +356,7 @@ mod test {
         assert_eq!(r"\\Whack\a\Box", FlexPath::from_n(["foo", r"\\Whack////a//Box", "..", "Box"], windows).to_string());
         assert_eq!(r"\\?\X:\", FlexPath::from_n([r"\\?\X:", r".."], windows).to_string());
         assert_eq!(r"\\?\X:\", FlexPath::from_n([r"\\?\X:\", r".."], windows).to_string());
+        assert_eq!(r"\\?\UNC\Whack\a\Box", FlexPath::from_n([r"\\?\UNC\Whack\a\Box", r"..", "Box"], windows).to_string());
         assert_eq!(r"C:\a", FlexPath::new("C:/", windows).resolve("a").to_string());
         assert_eq!(r"D:\", FlexPath::new("C:/", windows).resolve("D:/").to_string());
         assert_eq!(r"D:\a", FlexPath::new("D:/a", windows).to_string());
@@ -362,5 +383,11 @@ mod test {
         assert_eq!("../../foo", FlexPath::new(r"\\a/b", windows).relative(r"\\foo"));
         assert_eq!("D:/", FlexPath::new("C:/", windows).relative(r"D:"));
         assert_eq!("../bar", FlexPath::new(r"\\?\C:\foo", windows).relative(r"\\?\C:\bar"));
+    }
+
+    #[test]
+    fn canonicalization() {
+        assert_eq!(PathBuf::from_str(r"\\?\C:\foo").unwrap(), canonicalize_inexistent_path(r"C:/foo/"));
+        assert_eq!(PathBuf::from_str(r"\\?\UNC\server\foo").unwrap(), canonicalize_inexistent_path(r"\\server\foo\"));
     }
 }
