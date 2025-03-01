@@ -308,8 +308,7 @@ fn base_name_without_ext<'a, T>(path: &str, extensions: T) -> String
     })
 }
 
-/// Similiar to `std::fs::canonicalize`, but normalizes inexistent paths, and with a
-/// few differences.
+/// Normalizes a path by resolving relative components and performing some changes.
 /// 
 /// For Windows, any `\\?\X:`, `X:`, or `\\?\UNC\` prefixes are ensured
 /// to be uppercase and UNC host names and rest characters are always returned in lowercase form.
