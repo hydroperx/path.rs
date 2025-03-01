@@ -43,7 +43,7 @@ pub(crate) mod flexible;
 /// * `Windows`
 #[derive(Clone, Copy, Eq, PartialEq, Ord, PartialOrd, Debug)]
 pub enum FlexPathVariant {
-    /// Indicates that the path is manipulated in a common way, resulting into forward slashes.
+    /// Indicates that the path is manipulated in a Unix common way, resulting into forward slashes.
     Common,
     /// Indicates that the path is manipulated compatibly with the Windows operating system.
     Windows,
