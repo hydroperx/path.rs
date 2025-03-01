@@ -3,6 +3,7 @@
 Work with textual file paths, including relativity and resolution. Features:
 
 - _Variant_: `FlexPath` methods consider absolute paths according to the path's `FlexPathVariant`. Two variants are supported: `Common` and `Windows`. The native variant can be deduced directly through `_native` suffixed methods.
+- _Normalization_: normalize paths with the `normalize_path()` function, whether they exist or not (does not solve for symlinks and real letter case).
 
 Requirements:
 

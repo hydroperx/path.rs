@@ -308,19 +308,19 @@ fn base_name_without_ext<'a, T>(path: &str, extensions: T) -> String
     })
 }
 
-/// Similiar to `std::fs::canonicalize`, but canonicalizes
-/// inexistent paths.
+/// Similiar to `std::fs::canonicalize`, but normalizes inexistent paths, and with a
+/// few differences.
 /// 
 /// For Windows, any `\\?\X:`, `X:`, or `\\?\UNC\` prefixes are ensured
-/// to be uppercase.
+/// to be uppercase and UNC host names and rest characters are always returned in lowercase form.
 /// 
 /// ```ignore
-/// assert_eq!(PathBuf::from_str(r"\\?\C:\foo").unwrap(), canonicalize_inexistent_path(r"C:/foo/"));
-/// assert_eq!(PathBuf::from_str(r"\\?\UNC\server\foo").unwrap(), canonicalize_inexistent_path(r"\\server\foo\"));
-/// assert_eq!(PathBuf::from_str(r"\\?\C:\foo").unwrap(), canonicalize_inexistent_path(r"\\?\c:/foo/"));
-/// assert_eq!(PathBuf::from_str(r"\\?\UNC\server\foo").unwrap(), canonicalize_inexistent_path(r"\\?\unc\server\foo\"));
+/// assert_eq!(PathBuf::from_str(r"\\?\C:\program files").unwrap(), normalize_path(r"C:/Program Files/"));
+/// assert_eq!(PathBuf::from_str(r"\\?\UNC\server\foo").unwrap(), normalize_path(r"\\server\foo\"));
+/// assert_eq!(PathBuf::from_str(r"\\?\C:\foo").unwrap(), normalize_path(r"\\?\c:/foo/"));
+/// assert_eq!(PathBuf::from_str(r"\\?\UNC\server\foo").unwrap(), normalize_path(r"\\?\unc\server\Foo\"));
 /// ```
-pub fn canonicalize_inexistent_path(p: impl AsRef<Path>) -> PathBuf {
+pub fn normalize_path(p: impl AsRef<Path>) -> PathBuf {
     let cwd = std::env::current_dir().unwrap_or(PathBuf::from_str("/").unwrap());
     let p = FlexPath::from_n_native([cwd.to_str().unwrap(), &p.as_ref().to_string_lossy().to_owned()]).to_string();
     let p = regex_replace!(r"[^\\/][\\/]+$", &p, |a: &str| {
@@ -328,20 +328,20 @@ pub fn canonicalize_inexistent_path(p: impl AsRef<Path>) -> PathBuf {
     }).into_owned();
 
     // If Windows absolute paths use extended-length syntax already,
-    // ensure to use uppercase prefixes.
-    if let Some(d) = regex_captures!(r"\\\\\?\\[Uu][Nn][Cc]", &p) {
-        return PathBuf::from_str(&(d.to_uppercase() + &p[7..])).unwrap_or(PathBuf::new());
+    // ensure to use uppercase prefixes except for UNC host names.
+    if regex_is_match!(r"\\\\\?\\[Uu][Nn][Cc]", &p) {
+        return PathBuf::from_str(&(r"\\?\UNC".to_owned() + &p[7..].to_lowercase())).unwrap_or(PathBuf::new());
     }
     if let Some(d) = regex_captures!(r"\\\\\?\\[A-Za-z]\:", &p) {
-        return PathBuf::from_str(&(d.to_uppercase() + &p[6..])).unwrap_or(PathBuf::new());
+        return PathBuf::from_str(&(d.to_uppercase() + &p[6..].to_lowercase())).unwrap_or(PathBuf::new());
     }
 
     // Use extended-length syntax for Windows absolute paths
     if let Some(d) = regex_captures!(r"^[A-Za-z]\:", &p) {
-        return PathBuf::from_str(&(r"\\?\".to_owned() + &d.to_uppercase() + &p[2..])).unwrap_or(PathBuf::new());
+        return PathBuf::from_str(&(r"\\?\".to_owned() + &d.to_uppercase() + &p[2..].to_lowercase())).unwrap_or(PathBuf::new());
     }
     if regex_is_match!(r"^(\\\\([^?]|$))", &p) {
-        return PathBuf::from_str(&(r"\\?\UNC".to_owned() + &p[1..].to_owned())).unwrap_or(PathBuf::new());
+        return PathBuf::from_str(&(r"\\?\UNC".to_owned() + &p[1..].to_lowercase())).unwrap_or(PathBuf::new());
     }
 
     PathBuf::from_str(&p).unwrap_or(PathBuf::new())
@@ -405,10 +405,10 @@ mod test {
     }
 
     #[test]
-    fn canonicalization() {
-        assert_eq!(PathBuf::from_str(r"\\?\C:\foo").unwrap(), canonicalize_inexistent_path(r"C:/foo/"));
-        assert_eq!(PathBuf::from_str(r"\\?\UNC\server\foo").unwrap(), canonicalize_inexistent_path(r"\\server\foo\"));
-        assert_eq!(PathBuf::from_str(r"\\?\C:\foo").unwrap(), canonicalize_inexistent_path(r"\\?\c:/foo/"));
-        assert_eq!(PathBuf::from_str(r"\\?\UNC\server\foo").unwrap(), canonicalize_inexistent_path(r"\\?\unc\server\foo\"));
+    fn normalization() {
+        assert_eq!(PathBuf::from_str(r"\\?\C:\program files").unwrap(), normalize_path(r"C:/Program Files/"));
+        assert_eq!(PathBuf::from_str(r"\\?\UNC\server\foo").unwrap(), normalize_path(r"\\server\foo\"));
+        assert_eq!(PathBuf::from_str(r"\\?\C:\foo").unwrap(), normalize_path(r"\\?\c:/foo/"));
+        assert_eq!(PathBuf::from_str(r"\\?\UNC\server\foo").unwrap(), normalize_path(r"\\?\unc\server\Foo\"));
     }
 }
