@@ -318,6 +318,8 @@ fn base_name_without_ext<'a, T>(path: &str, extensions: T) -> String
 /// assert_eq!(PathBuf::from_str(r"\\?\UNC\server\foo").unwrap(), normalize_path(r"\\server\foo\"));
 /// assert_eq!(PathBuf::from_str(r"\\?\C:\foo").unwrap(), normalize_path(r"\\?\c:/foo/"));
 /// assert_eq!(PathBuf::from_str(r"\\?\UNC\server\foo").unwrap(), normalize_path(r"\\?\unc\server\Foo\"));
+/// assert_eq!(PathBuf::from_str(r"\\?\C:").unwrap(), normalize_path(r"\\?\C:\\"));
+/// assert_eq!(PathBuf::from_str(r"\\?\C:").unwrap(), normalize_path(r"\\?\C:"));
 /// ```
 pub fn normalize_path(p: impl AsRef<Path>) -> PathBuf {
     let cwd = std::env::current_dir().unwrap_or(PathBuf::from_str("/").unwrap());
