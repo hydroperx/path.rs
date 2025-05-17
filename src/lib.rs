@@ -19,7 +19,7 @@ is always _Windows_. For other platforms, it's always _Common_.
 # Example
 
 ```
-use realhydroper_path::FlexPath;
+use hydroperx_path::FlexPath;
 
 assert_eq!("a", FlexPath::new_common("a/b").resolve("..").to_string());
 assert_eq!("a", FlexPath::new_common("a/b/..").to_string());
@@ -152,7 +152,7 @@ impl FlexPath {
     # Example
 
     ```
-    use realhydroper_path::FlexPath;
+    use hydroperx_path::FlexPath;
     assert_eq!("", FlexPath::new_common("/a/b").relative("/a/b"));
     assert_eq!("c", FlexPath::new_common("/a/b").relative("/a/b/c"));
     assert_eq!("../../c/d", FlexPath::new_common("/a/b").relative("/c/d"));
@@ -173,7 +173,7 @@ impl FlexPath {
     /// # Example
     /// 
     /// ```
-    /// use realhydroper_path::FlexPath;
+    /// use hydroperx_path::FlexPath;
     /// assert_eq!("a.y", FlexPath::new_common("a.x").change_extension(".y").to_string());
     /// assert_eq!("a.z", FlexPath::new_common("a.x.y").change_extension(".z").to_string());
     /// assert_eq!("a.z.w", FlexPath::new_common("a.x.y").change_extension(".z.w").to_string());
@@ -214,7 +214,7 @@ impl FlexPath {
     /// # Example
     /// 
     /// ```
-    /// use realhydroper_path::FlexPath;
+    /// use hydroperx_path::FlexPath;
     /// assert_eq!("qux.html", FlexPath::new_common("foo/qux.html").base_name());
     /// ```
     pub fn base_name(&self) -> String {
@@ -228,7 +228,7 @@ impl FlexPath {
     /// # Example
     /// 
     /// ```
-    /// use realhydroper_path::FlexPath;
+    /// use hydroperx_path::FlexPath;
     /// assert_eq!("qux", FlexPath::new_common("foo/qux.html").base_name_without_ext([".html"]));
     /// ```
     pub fn base_name_without_ext<'a, T>(&self, extensions: T) -> String
@@ -269,7 +269,7 @@ fn change_last_extension(path: &str, extension: &str) -> String {
     let extension = (if extension.starts_with('.') { "" } else { "." }).to_owned() + extension;
     assert!(
         extension[1..].find('.').is_none(),
-        "The argument to realhydroper_path::change_last_extension() must only contain one extension; got {}",
+        "The argument to hydroperx_path::change_last_extension() must only contain one extension; got {}",
         extension
     );
     if regex_find!(r"(\..+)$", path).is_none() {

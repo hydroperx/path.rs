@@ -1,4 +1,4 @@
-# File Paths
+# hydroperx::path
 
 Work with textual file paths, including relativity and resolution. Features:
 
@@ -12,7 +12,7 @@ Requirements:
 # Example
 
 ```rust
-use realhydroper_path::FlexPath;
+use hydroperx_path::FlexPath;
 
 assert_eq!("a", FlexPath::new_common("a/b").resolve("..").to_string());
 assert_eq!("a", FlexPath::new_common("a/b/..").to_string());
