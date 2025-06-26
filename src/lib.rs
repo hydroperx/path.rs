@@ -330,10 +330,10 @@ pub fn normalize_path(p: impl AsRef<Path>) -> PathBuf {
 
     // If Windows absolute paths use extended-length syntax already,
     // ensure to use uppercase prefixes except for UNC host names.
-    if regex_is_match!(r"\\\\\?\\[Uu][Nn][Cc]", &p) {
+    if regex_is_match!(r"^\\\\\?\\[Uu][Nn][Cc]", &p) {
         return PathBuf::from_str(&(r"\\?\UNC".to_owned() + &p[7..].to_lowercase())).unwrap_or(PathBuf::new());
     }
-    if let Some(d) = regex_captures!(r"\\\\\?\\[A-Za-z]\:", &p) {
+    if let Some(d) = regex_captures!(r"^\\\\\?\\[A-Za-z]\:", &p) {
         return PathBuf::from_str(&(d.to_uppercase() + &p[6..].to_lowercase())).unwrap_or(PathBuf::new());
     }
 
