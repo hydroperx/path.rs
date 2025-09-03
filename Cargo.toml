@@ -1,9 +1,9 @@
 [package]
-name = "hydroperx-path"
+name = "fairyvoid-path"
 version = "1.0.0"
 edition = "2021"
-authors = ["hydroperx <hydroperfox@gmail.com>"]
-repository = "https://github.com/hydroperx/path.rs"
+authors = ["fairyvoid <fairepoint@gmail.com>"]
+repository = "https://github.com/fairyvoid/path.rs"
 license = "ISC"
 description = "Work with flexible file paths"
 
